@@ -1,0 +1,19 @@
+function read_file(filename)
+    smiles = []
+    names = []
+    mols = []
+    open(filename) do file
+        for line in eachline(file)
+            smile, name = split(line, " ")
+            mol = get_mol(smile)
+            #noting is same as None in python
+            if any(isnothing(mol)) == true
+                continue
+            end
+            push!(smiles, smile)
+            push!(names, name)
+            push!(mols, mol)
+        end
+    return names, smiles, mols
+    end
+end
