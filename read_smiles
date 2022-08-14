@@ -1,3 +1,5 @@
+using RDKitMinimalLib
+
 function read_file(filename)
     smiles = []
     names = []
