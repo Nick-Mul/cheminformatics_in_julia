@@ -19,3 +19,8 @@ function read_file(filename)
     return names, smiles, mols
     end
 end
+
+function featurise_molecule(mol, fp_details = Dict{String, Any}("nBits" => 512, "radius" => 2))
+    morgan_fp = Int8.(collect(RDKitMinimalLib.get_morgan_fp(mol, fp_details))) .-Int8(48)
+    return morgan_fp
+end
