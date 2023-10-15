@@ -95,3 +95,14 @@ degree_list = [0, 1, 2, 3, 4, "MoreThanFour"]
 
 n_node_features = length(permitted_list_of_atoms)+length(degree_list)
 print("lenghth of vector ", n_node_features)
+
+function create_adjacency_from_mol(mol)
+    edges = (to_dict(mol))["graph"]
+    num_nodes = maximum(maximum.(edges))
+    adjacency_matrix = zeros(Int, num_nodes, num_nodes)
+    for edge in edges
+        src, dest = edge
+        adjacency_matrix[src, dest] = 1
+    end
+    return adjacency_matrix
+end
