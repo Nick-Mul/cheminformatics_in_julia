@@ -1,0 +1,10 @@
+name = "pdb_tool"
+uuid = "df26daaf-462c-4371-9f64-853b913ba5b0"
+authors = ["Nick-Mul <59069964+Nick-Mul@users.noreply.github.com>"]
+version = "0.1.0"
+
+[deps]
+Fermi = "9237668d-08c8-4784-b8dd-383aa52fcf74"
+Molecules = "5de6a177-b489-40a9-b2f4-524242b9b679"
+PDBTools = "e29189f1-7114-4dbd-93d0-c5673a921a58"
+Pluto = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
