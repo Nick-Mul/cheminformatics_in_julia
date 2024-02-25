@@ -24,31 +24,23 @@ function write_ligand(ligand)
 end
 
 function write_binding_site(ligand, protein)
-    binding_site = []
-    binding_site_residues = []
-    charge = 0
-    for atom in ligand
-        lig, protein_atom, dist = (closest(atom, protein))
-        push!(binding_site, (protein[protein_atom]))
+    active_site = []
+    for r in eachresidue(protein)
+        if distance(r, ligand) < 3.5
+            append!(active_site, at for at in r)
+        end
     end
-    for i in binding_site
-        push!(binding_site_residues, i.resnum)
-    end
-    binding_site_residues_clean = sort(union(binding_site_residues))
-    res = [select(protein, "resnum = $i and chain = A") for i in binding_site_residues_clean]
     open(pwd() * "/binding_site.xyz", "w") do f
-        for i in res
-            for j in i
-                x, y, z = position(j)
-                atom = element(j)
-                write(f, "$atom $x $y $z \n")
-            end
+        for i in active_site
+            x, y, z = position(i)
+            atom = element(i)
+            write(f, "$atom $x $y $z \n")
         end
     end
 end
+
 write_ligand(ligand)
 write_binding_site(ligand, protein)
-
 
 s = open("ligand.xyz") do file
     read(file, String)
