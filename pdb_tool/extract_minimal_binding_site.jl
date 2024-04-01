@@ -31,7 +31,9 @@ ARG_list = [
     "2HH1",
     "NH2",
     "1HH2",
-    "2HH2"
+    "2HH2",
+    "HH22",
+    "HH21",
 ]
 
 TRP_list = [
@@ -53,6 +55,23 @@ TRP_list = [
     "HZ3",
     "CH2",
     "HH2"
+]
+
+PHE_list = [
+    "CB",
+    "HB3",
+    "HB2",
+    "CG",
+    "CD1",
+    "HD1",
+    "CE1",
+    "HE1",
+    "CD2",
+    "HD2",
+    "CE2",
+    "HE2",
+    "CZ",
+    "HZ"
 ]
 
 LYS_list = ["CE", "HE1", "HE2", "NZ", "HZ1", "HZ2", "HZ3"]
@@ -83,6 +102,38 @@ function define_active_site_atoms(protein, ligand)
     return active_site_atoms
 end
 
+struct PDBQTData
+    atoms::Atom
+    partial_charge::Float64
+end
+
+function write_large_binding_site(ligand, protein)
+    active_site_atoms = Atom[]
+    active_site_atoms_with_charges = []
+    for residue in eachresidue(protein)
+        if distance(residue, ligand) < 5
+            append!(active_site_atoms, atom for atom in residue)
+        end
+    end
+    writePDB(active_site_atoms,"file.pdb")
+    run(`xtb file.pdb`)
+    lines =  parse.(Float64, (readlines("charges")))
+    for (i, atom) in enumerate(active_site_atoms)
+        push!(active_site_atoms_with_charges, PDBQTData(atom, lines[i]))
+    end
+    print(active_site_atoms_with_charges[1])
+end
+
+
+function write_xyx(atom_list)
+    open(pwd() * "truct_binding.xyz", "w") do f
+        for i in atom_list
+            x, y, z = position(i)
+            atom = element(i)
+            write(f, "$atom $x $y $z \n")
+        end
+    end
+end
 
 function write_binding_site(ligand, protein)
     active_site_atoms = Atom[]
@@ -111,11 +162,11 @@ function trucate_residues(residues, protein, ligand)
     trucates residue and returns atom_list
     """
     atom_list = []
-    for atom in protein
-        if closest(atom, ligand)[3] < 3.0
-            push!(atom_list, atom.index)
-        end
-    end
+    #for atom in protein
+    #    if closest(atom, ligand)[3] < 3.5
+    #        push!(atom_list, atom.index)
+    #    end
+    #end
     for residue in residues
         for atoms in residue
             if atoms.resname == "TYR" && atoms.name in TYR_list
@@ -130,20 +181,18 @@ function trucate_residues(residues, protein, ligand)
                 #println(atoms.resname ," " , atoms.name, " ", element(atoms))
                 push!(atom_list, atoms.index)
             end
+            if atoms.resname == "LYS" && atoms.name in LYS_list
+                #println(atoms.resname ," " , atoms.name, " ", element(atoms))
+                push!(atom_list, atoms.index)
+            end
+            if atoms.resname == "PHE" && atoms.name in PHE_list
+                push!(atom_list, atoms.index)
+            end
         end
     end
     return sort(unique(atom_list))
 end
 
-function get_close_atoms(protein, ligand)
-    atom_list = []
-    for atom in protein
-        if closest(atom, ligand)[3] < 3.0
-            push!(atom_list, atom.index)
-        end
-    end
-    return atom_list
-end
 
 """
 get structre from pdb
@@ -157,7 +206,7 @@ get structre from pdb
     model = wget("$pdb_file", "chain A")
     protein = select(model,"protein")
     ligand = select(model,"resname $ligand_name")
-    #write_ligand(ligand)
+    write_ligand(ligand)
     #write_binding_site(ligand, protein)
     #
     return
@@ -185,22 +234,24 @@ read_pdb structre from pdb
 else
     #run(`obabel path_to_your_pdb_file.pdb -h -O output_with_hydrogens.pdb`)
     model = readPDB("$pdb_file")
-    protein = select(model,"protein")
     ligand = select(model,"resname $ligand_name and chain G")
+    protein = select(model,"protein")
+    
 end
-    write_ligand(ligand)
-    write_binding_site(ligand, protein)
+    #write_ligand(ligand)
+    #write_binding_site(ligand, protein)
+    write_large_binding_site(ligand, protein)
     active_site_atoms = define_active_site_atoms(protein, ligand)
     residues = (eachresidue(active_site_atoms))
     at_list = trucate_residues(residues, protein, ligand)
-    get_close_atoms(protein, ligand)
-    print(at_list)
+    trucated_binding_site = Atom[]
     for at in at_list
         x = select(protein, "index $at")
-        for i in x
-            println(position(i))
-        end
+        println(x)
+        append!(trucated_binding_site,x)
     end
+    writePDB(trucated_binding_site,"trucated_binding_site.pdb")
+    write_xyx(trucated_binding_site) # not working at the moment
     return
 end
 
